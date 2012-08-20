@@ -1,4 +1,4 @@
-474419d0bf1df1b4141fe50e290f62ba *DESCRIPTION
+0b6cef5d2687e1dc525cfa4c342ee55e *DESCRIPTION
 0416d34179f2b125c4fe629a585fe491 *NAMESPACE
 69218dea6c1511b270b7e4bdc6af5fc9 *NEWS
 5a5cad1d3be09fa2ed1d33d1b1f80754 *R/Backsolve.R
@@ -55,6 +55,8 @@ c0675232d555594e7527285add0718b6 *R/print.genlasso.R
 27e7e833300fc6975c92d0390905d8c3 *R/trendfilter.R
 905b59280485a7d67429c98672da33d1 *R/updateT.R
 47f7a09b4e2dcc1445dc68212bc7c980 *R/updateW.R
+6fb698f5e852d20dd53af5cde38570cc *build/vignette.rds
+a0db77cb7317b1aa88bc6d591d25990e *inst/doc/article.R
 908613b39c2f2468935ae484730f74ba *inst/doc/article.Rnw
 09d8e2b4ce7ac597f52c6739b4665199 *inst/doc/article.pdf
 b011a371074cb87e624ba48d8465628c *man/coef.genlasso.Rd
@@ -64,14 +66,12 @@ b349fb7008241f2524b3f2e5aa464d60 *man/filebackout.Rd
 9e299538edd788a29a6022e9b635a38a *man/genlasso-package.Rd
 5c8cd4a313195f5d29f7e1028b499b4d *man/genlasso.Rd
 1bc7ef81501b3e986cfbc115c3ef01da *man/getD2d.Rd
-15a024f0c0c4ac83aba9f6f6054cb134 *man/plot.genlasso.Rd
+aa4d2a8cdab56162ebc4d2c6e1342271 *man/plot.genlasso.Rd
 378440505f8c10f8d7ddeb408cd0efb7 *man/predict.genlasso.Rd
 856be79ee400dd5a0e0791c06c02ce39 *man/softthresh.Rd
-a8fd382fd3f0e1dc8c6728cf96586f15 *man/trendfilter.Rd
+1f707fb6b9e932fc52beaba670904d9f *man/trendfilter.Rd
 4313aa781953d7f1f6e75383e938e1c7 *src/matrixcomps.c
 908613b39c2f2468935ae484730f74ba *vignettes/article.Rnw
 1102f21f8f1a8921744ccd2a5c489278 *vignettes/bibfile.bib
 ba131efec857c1b66d1098e5806c6b7b *vignettes/figures/article-compTime.pdf
 5217ae9c5cedee09b6719a8311be881a *vignettes/figures/article-trendPlot.pdf
-48669c4e55fe2392469dcf01641c5c06 *vignettes/jss.bst
-84f542c2900480e1564a91e6f7607ae5 *vignettes/jss.cls

@@ -151,7 +151,7 @@ trendfilter(y, X, z, ord = 1, approx = FALSE, maxsteps = 2000,
 \examples{
 # Constant trend filtering (the 1d fused lasso)
 set.seed(0)
-n = 100
+n = 50
 beta0 = rep(sample(1:10,5),each=n/5)
 y = beta0 + rnorm(n,sd=0.8)
 a = fusedlasso1d(y)
@@ -159,7 +159,7 @@ plot(a)
 
 # Linear trend filtering
 set.seed(0)
-n = 100
+n = 50
 beta0 = numeric(n)
 beta0[1:20] = (0:19)*4/19+2
 beta0[20:45] = (25:0)*3/25+3
@@ -171,7 +171,7 @@ plot(a,df=c(2,3,4,10))
 
 # Cubic trend filtering
 set.seed(0)
-n = 100
+n = 50
 beta0 = numeric(100)
 beta0[1:40] = (1:40-20)^3
 beta0[40:50] = -60*(40:50-50)^2 + 60*100+20^3

@@ -91,11 +91,11 @@
 \examples{
 # Constant trend filtering (the 1d fused lasso)
 set.seed(0)
-n = 100
+n = 50
 beta0 = rep(sample(1:10,5),each=n/5)
 y = beta0 + rnorm(n,sd=0.8)
 a = fusedlasso1d(y)
-cv = cv.trendfilter(a)
+cv = cv.trendfilter(a, k=4)
 
 plot(a,style="path")
 plot(cv)
