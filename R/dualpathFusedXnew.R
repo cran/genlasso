@@ -14,7 +14,8 @@
 # the open interval to the *right* of the current lambda_k.
 
 dualpathFusedXnew <- function(y, X, D, approx=FALSE, maxsteps=2000, minlam=0,
-                              tol=1e-11, verbose=FALSE, fileback=FALSE) {
+                              tol=1e-11, verbose=FALSE, fileback=FALSE,
+                              object=NULL) {
   m = nrow(D)
   p = ncol(D)
   n = length(y)
@@ -149,251 +150,256 @@ dualpathFusedXnew <- function(y, X, D, approx=FALSE, maxsteps=2000, minlam=0,
   D2 = D[ihit,,drop=FALSE]   # Matrix D[B,]
   k = 2                      # What step are we at?
 
-  while (k<=maxsteps && lams[k-1]>=minlam) {
-    ##########
-    # Check if we've reached the end of the buffer
-    if (k > length(lams)) {
-      buf = length(lams)
-      lams = c(lams,numeric(buf))
-      h = c(h,logical(buf))
-      df = c(df,numeric(buf))
-      if (fileback==FALSE) {
-        u = cbind(u,matrix(0,m,buf))
-        beta = cbind(beta,matrix(0,p,buf))
-      }
-    }
-    
-    ##########
-    Ds = as.numeric(t(D2)%*%s)
-
-    # Precomputation for the hitting times
-#    A = matrix(0,n,q)
-    z = matrix(0,q,2)
-    for (j in Seq(1,q)) {
-      oo = which(i==j)
-      A[,j] = rowMeans(X[,oo,drop=FALSE])
-      z[j,1] = mean(xy[oo])
-      z[j,2] = mean(Ds[oo])
-    }
-    e = backsolve(qrobj$R,forwardsolve(qrobj$R,z,upper.tri=TRUE,transpose=TRUE))
-    ea = e[,1]
-    eb = e[,2]
-    ga = xy-t(X)%*%A%*%ea
-    gb = Ds-t(X)%*%A%*%eb
-    
-    # If the interior is empty, then nothing will hit
-    if (r==m) {
-      fa = ea[i]
-      fb = eb[i]
-      hit = 0
-    }
-    
-    # Otherwise, find the next hitting time
-    else {            
-      xa = xb = numeric(p)
-      fa = fb = numeric(p)
-
-      # For efficiency, don't loop over singletons
-      tab = tabulate(i)
-      oo = which(tab[i]==1)
-      if (length(oo)>0) {
-        fa[oo] = ea[i][oo]
-        fb[oo] = eb[i][oo]
-      }
-
-      # Same for groups with two elements (doubletons?)
-      oi = order(i)
-      oo = which(tab[i][oi]==2)
-      if (length(oo)>0) {
-        fa[oi][oo] = ea[i][oi][oo]/2
-        fb[oi][oo] = eb[i][oi][oo]/2
-        ma = colMeans(matrix(ga[oi][oo],nrow=2))
-        mb = colMeans(matrix(gb[oi][oo],nrow=2))
-        ii = oo[Seq(1,length(oo),by=2)]
-        xa[oi][ii] = ga[oi][ii] - ma
-        xb[oi][ii] = gb[oi][ii] - mb
-      }
-
-      # Now all groups with at least three elements
-      cs = cumsum(tab)
-      grps = which(tab>2)
-      for (j in grps) {
-        oo = oi[Seq(cs[j]-tab[j]+1,cs[j])]    
-        fa[oo] = ea[j]/length(oo)
-        fb[oo] = eb[j]/length(oo)
-        gaj = ga[oo]
-        gbj = gb[oo]
-        Lj = crossprod(Matrix(D1[,oo[-1]],sparse=TRUE))
-        xa[oo][-1] = as.numeric(solve(Lj,(gaj-mean(gaj))[-1]))
-        xb[oo][-1] = as.numeric(solve(Lj,(gbj-mean(gbj))[-1]))
+  tryCatch({  
+    while (k<=maxsteps && lams[k-1]>=minlam) {
+      ##########
+      # Check if we've reached the end of the buffer
+      if (k > length(lams)) {
+        buf = length(lams)
+        lams = c(lams,numeric(buf))
+        h = c(h,logical(buf))
+        df = c(df,numeric(buf))
+        if (fileback==FALSE) {
+          u = cbind(u,matrix(0,m,buf))
+          beta = cbind(beta,matrix(0,p,buf))
+        }
       }
       
-      a = as.numeric(D1%*%xa)
-      b = as.numeric(D1%*%xb)
-      shits = Sign(a)
-      hits = a/(b+shits);
+      ##########
+      Ds = as.numeric(t(D2)%*%s)
 
-      # Make sure none of the hitting times are larger
-      # than the current lambda (precision issue)
-      hits[hits>lams[k-1]] = hits[k-1]
-      
-      ihit = which.max(hits)
-      hit = hits[ihit]
-      shit = shits[ihit]
-    }
-    
-    ##########
-    # If nothing is on the boundary, then nothing will leave
-    # Also, skip this if we are in "approx" mode
-    if (r==0 || approx) {
-      leave = 0
-    }
-
-    # Otherwise, find the next leaving time
-    else {
-      c = as.numeric(s*(D2%*%fa))
-      d = as.numeric(s*(D2%*%fb))
-      leaves = c/d
-
-      # c must be negative
-      leaves[c>=0] = 0
-
-      # Make sure none of the leaving times are larger
-      # than the current lambda (precision issue)
-      leaves[leaves>lams[k-1]] = lams[k-1]
-
-      ileave = which.max(leaves)
-      leave = leaves[ileave]
-    }
-
-    ##########
-    # Stop if the next critical point is negative
-    if (hit<=0 && leave<=0) break
-
-    # If a hitting time comes next
-    if (hit > leave) {
-      # Record the critical lambda and properties
-      lams[k] = hit
-      h[k] = TRUE
-      df[k] = q
-      uhat = numeric(m)
-      uhat[B] = hit*s
-      uhat[I] = a-hit*b
-      betahat = fa-hit*fb
-
-      # Only record the solutions if we are not
-      # filebacking
-      if (fileback==FALSE) {
-        u[,k] = uhat
-        beta[,k] = betahat
+      # Precomputation for the hitting times
+  #    A = matrix(0,n,q)
+      z = matrix(0,q,2)
+      for (j in Seq(1,q)) {
+        oo = which(i==j)
+        A[,j] = rowMeans(X[,oo,drop=FALSE])
+        z[j,1] = mean(xy[oo])
+        z[j,2] = mean(Ds[oo])
       }
+      e = backsolve(qrobj$R,forwardsolve(qrobj$R,z,upper.tri=TRUE,transpose=TRUE))
+      ea = e[,1]
+      eb = e[,2]
+      ga = xy-t(X)%*%A%*%ea
+      gb = Ds-t(X)%*%A%*%eb
+      
+      # If the interior is empty, then nothing will hit
+      if (r==m) {
+        fa = ea[i]
+        fb = eb[i]
+        hit = 0
+      }
+      
+      # Otherwise, find the next hitting time
+      else {            
+        xa = xb = numeric(p)
+        fa = fb = numeric(p)
+
+        # For efficiency, don't loop over singletons
+        tab = tabulate(i)
+        oo = which(tab[i]==1)
+        if (length(oo)>0) {
+          fa[oo] = ea[i][oo]
+          fb[oo] = eb[i][oo]
+        }
+
+        # Same for groups with two elements (doubletons?)
+        oi = order(i)
+        oo = which(tab[i][oi]==2)
+        if (length(oo)>0) {
+          fa[oi][oo] = ea[i][oi][oo]/2
+          fb[oi][oo] = eb[i][oi][oo]/2
+          ma = colMeans(matrix(ga[oi][oo],nrow=2))
+          mb = colMeans(matrix(gb[oi][oo],nrow=2))
+          ii = oo[Seq(1,length(oo),by=2)]
+          xa[oi][ii] = ga[oi][ii] - ma
+          xb[oi][ii] = gb[oi][ii] - mb
+        }
+
+        # Now all groups with at least three elements
+        cs = cumsum(tab)
+        grps = which(tab>2)
+        for (j in grps) {
+          oo = oi[Seq(cs[j]-tab[j]+1,cs[j])]    
+          fa[oo] = ea[j]/length(oo)
+          fb[oo] = eb[j]/length(oo)
+          gaj = ga[oo]
+          gbj = gb[oo]
+          Lj = crossprod(Matrix(D1[,oo[-1]],sparse=TRUE))
+          xa[oo][-1] = as.numeric(solve(Lj,(gaj-mean(gaj))[-1]))
+          xb[oo][-1] = as.numeric(solve(Lj,(gbj-mean(gbj))[-1]))
+        }
+        
+        a = as.numeric(D1%*%xa)
+        b = as.numeric(D1%*%xb)
+        shits = Sign(a)
+        hits = a/(b+shits);
+
+        # Make sure none of the hitting times are larger
+        # than the current lambda (precision issue)
+        hits[hits>lams[k-1]] = hits[k-1]
+        
+        ihit = which.max(hits)
+        hit = hits[ihit]
+        shit = shits[ihit]
+      }
+      
+      ##########
+      # If nothing is on the boundary, then nothing will leave
+      # Also, skip this if we are in "approx" mode
+      if (r==0 || approx) {
+        leave = 0
+      }
+
+      # Otherwise, find the next leaving time
       else {
-        cat(hit, TRUE, q, uhat, betahat, file=zz, sep=",")
-        cat("\n", file=zz, sep="")
-      }      
+        c = as.numeric(s*(D2%*%fa))
+        d = as.numeric(s*(D2%*%fb))
+        leaves = c/d
 
-      # Update our graph
-      ed = which(D1[ihit,]!=0)
-      gr[ed[1],ed[2]] = 0             # Delete edge
-      newcl = subcomponent(gr,ed[1])  # New cluster
-      oldcl = which(i==i[ed[1]])      # Old cluster
-      # If these two clusters aren't the same, update
-      # the memberships
-      if (length(newcl)!=length(oldcl) || any(sort(newcl)!=sort(oldcl))) {
-        # Shift the two new clusters to the end
-        oldno = i[ed[1]]
-        i[i>oldno] = i[i>oldno]-1
-        i[oldcl] = q
-        i[newcl] = q+1
+        # c must be negative
+        leaves[c>=0] = 0
 
-        # QR update: first remove one column, then add two
-        qrobj = downdateW(qrobj$Q1,qrobj$Q2,qrobj$R,oldno)
-        col1 = rowMeans(X[,which(i==q),drop=FALSE])
-        col2 = rowMeans(X[,which(i==q+1),drop=FALSE])
-        qrobj = updateW(qrobj$Q1,qrobj$Q2,qrobj$R,col1)
-        qrobj = updateW(qrobj$Q1,qrobj$Q2,qrobj$R,col2)
+        # Make sure none of the leaving times are larger
+        # than the current lambda (precision issue)
+        leaves[leaves>lams[k-1]] = lams[k-1]
 
-        q = q+1
+        ileave = which.max(leaves)
+        leave = leaves[ileave]
       }
-      
-      # Update all other variables
-      r = r+1
-      B = c(B,I[ihit])
-      I = I[-ihit]
-      s = c(s,shit)
-      D2 = rBind(D2,D1[ihit,])
-      D1 = D1[-ihit,,drop=FALSE]
+
+      ##########
+      # Stop if the next critical point is negative
+      if (hit<=0 && leave<=0) break
+
+      # If a hitting time comes next
+      if (hit > leave) {
+        # Record the critical lambda and properties
+        lams[k] = hit
+        h[k] = TRUE
+        df[k] = q
+        uhat = numeric(m)
+        uhat[B] = hit*s
+        uhat[I] = a-hit*b
+        betahat = fa-hit*fb
+
+        # Only record the solutions if we are not
+        # filebacking
+        if (fileback==FALSE) {
+          u[,k] = uhat
+          beta[,k] = betahat
+        }
+        else {
+          cat(hit, TRUE, q, uhat, betahat, file=zz, sep=",")
+          cat("\n", file=zz, sep="")
+        }      
+
+        # Update our graph
+        ed = which(D1[ihit,]!=0)
+        gr[ed[1],ed[2]] = 0             # Delete edge
+        newcl = subcomponent(gr,ed[1])  # New cluster
+        oldcl = which(i==i[ed[1]])      # Old cluster
+        # If these two clusters aren't the same, update
+        # the memberships
+        if (length(newcl)!=length(oldcl) || any(sort(newcl)!=sort(oldcl))) {
+          # Shift the two new clusters to the end
+          oldno = i[ed[1]]
+          i[i>oldno] = i[i>oldno]-1
+          i[oldcl] = q
+          i[newcl] = q+1
+
+          # QR update: first remove one column, then add two
+          qrobj = downdateW(qrobj$Q1,qrobj$Q2,qrobj$R,oldno)
+          col1 = rowMeans(X[,which(i==q),drop=FALSE])
+          col2 = rowMeans(X[,which(i==q+1),drop=FALSE])
+          qrobj = updateW(qrobj$Q1,qrobj$Q2,qrobj$R,col1)
+          qrobj = updateW(qrobj$Q1,qrobj$Q2,qrobj$R,col2)
+
+          q = q+1
+        }
         
-      if (verbose) {
-        cat(sprintf("\n%i. lambda=%.3f, adding coordinate %i, |B|=%i...",
-                    k,hit,B[r],r))
+        # Update all other variables
+        r = r+1
+        B = c(B,I[ihit])
+        I = I[-ihit]
+        s = c(s,shit)
+        D2 = rBind(D2,D1[ihit,])
+        D1 = D1[-ihit,,drop=FALSE]
+          
+        if (verbose) {
+          cat(sprintf("\n%i. lambda=%.3f, adding coordinate %i, |B|=%i...",
+                      k,hit,B[r],r))
+        }
       }
-    }
-              
-    # Otherwise a leaving time comes next
-    else {
-      # Record the critical lambda and properties
-      lams[k] = leave
-      h[k] = FALSE
-      df[k] = q
-      uhat = numeric(m)
-      uhat[B] = leave*s
-      uhat[I] = a-leave*b
-      betahat = fa-leave*fb
-      
-      # Only record the solutions if we are not
-      # filebacking
-      if (fileback==FALSE) {
-        u[,k] = uhat
-        beta[,k] = betahat
-      }
+                
+      # Otherwise a leaving time comes next
       else {
-        cat(leave, FALSE, q, uhat, betahat, file=zz, sep=",")
-        cat("\n", file=zz, sep="")
-      }
+        # Record the critical lambda and properties
+        lams[k] = leave
+        h[k] = FALSE
+        df[k] = q
+        uhat = numeric(m)
+        uhat[B] = leave*s
+        uhat[I] = a-leave*b
+        betahat = fa-leave*fb
+        
+        # Only record the solutions if we are not
+        # filebacking
+        if (fileback==FALSE) {
+          u[,k] = uhat
+          beta[,k] = betahat
+        }
+        else {
+          cat(leave, FALSE, q, uhat, betahat, file=zz, sep=",")
+          cat("\n", file=zz, sep="")
+        }
 
-      # Update our graph
-      ed = which(D2[ileave,]!=0)
-      gr[ed[1],ed[2]] = 1             # Add edge
-      newcl = subcomponent(gr,ed[1])  # New cluster
-      oldcl = which(i==i[ed[1]])      # Old cluster
-      # If these two clusters aren't the same, update
-      # the memberships
-      if (length(newcl)!=length(oldcl) || !all(sort(newcl)==sort(oldcl))) {
-        # Shift the new cluster to the end
-        oldno1 = max(i[ed[1]],i[ed[2]])
-        oldno2 = min(i[ed[1]],i[ed[2]])
-        i[i==oldno1] = oldno2
-        i[i>oldno1] = i[i>oldno1]-1
-        i[i==oldno2] = q
-        i[i>oldno2] = i[i>oldno2]-1
+        # Update our graph
+        ed = which(D2[ileave,]!=0)
+        gr[ed[1],ed[2]] = 1             # Add edge
+        newcl = subcomponent(gr,ed[1])  # New cluster
+        oldcl = which(i==i[ed[1]])      # Old cluster
+        # If these two clusters aren't the same, update
+        # the memberships
+        if (length(newcl)!=length(oldcl) || !all(sort(newcl)==sort(oldcl))) {
+          # Shift the new cluster to the end
+          oldno1 = max(i[ed[1]],i[ed[2]])
+          oldno2 = min(i[ed[1]],i[ed[2]])
+          i[i==oldno1] = oldno2
+          i[i>oldno1] = i[i>oldno1]-1
+          i[i==oldno2] = q
+          i[i>oldno2] = i[i>oldno2]-1
+          
+          # QR update: first remove two columns, then add one
+          qrobj = downdateW(qrobj$Q1,qrobj$Q2,qrobj$R,oldno1)
+          qrobj = downdateW(qrobj$Q1,qrobj$Q2,qrobj$R,oldno2)
+          col = rowMeans(X[,which(i==q-1),drop=FALSE])
+          qrobj = updateW(qrobj$Q1,qrobj$Q2,qrobj$R,col)
+          
+          q = q-1
+        }
         
-        # QR update: first remove two columns, then add one
-        qrobj = downdateW(qrobj$Q1,qrobj$Q2,qrobj$R,oldno1)
-        qrobj = downdateW(qrobj$Q1,qrobj$Q2,qrobj$R,oldno2)
-        col = rowMeans(X[,which(i==q-1),drop=FALSE])
-        qrobj = updateW(qrobj$Q1,qrobj$Q2,qrobj$R,col)
-        
-        q = q-1
+        # Update all other variables
+        r = r-1
+        I = c(I,B[ileave])
+        B = B[-ileave]
+        s = s[-ileave]
+        D1 = rBind(D1,D2[ileave,])
+        D2 = D2[-ileave,,drop=FALSE]
+
+        if (verbose) {
+          cat(sprintf("\n%i. lambda=%.3f, deleting coordinate %i, |B|=%i...",
+                      k,leave,I[m-r],r))
+        }
       }
       
-      # Update all other variables
-      r = r-1
-      I = c(I,B[ileave])
-      B = B[-ileave]
-      s = s[-ileave]
-      D1 = rBind(D1,D2[ileave,])
-      D2 = D2[-ileave,,drop=FALSE]
-
-      if (verbose) {
-        cat(sprintf("\n%i. lambda=%.3f, deleting coordinate %i, |B|=%i...",
-                    k,leave,I[m-r],r))
-      }
+      # Step counter
+      k = k+1
     }
-    
-    # Step counter
-    k = k+1
-  }
+  }, error = function(err) {
+    err$message = paste(err$message,"\n(Path computation has been terminated;",
+      " partial path is being returned.)",sep="")
+    warning(err)})
 
   # Trim 
   lams = lams[Seq(1,k-1)]

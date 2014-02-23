@@ -1,14 +1,9 @@
-getDtfPosSparse <- function(n,k,z) {
-  weights = 1/diff(c(z,z[n]+1))
-#  weights = weights/max(weights)
-  D = bandSparse(n, m=n, c(0,1), diagonals=list(-weights,weights))
-  D0 = bandSparse(n, m=n, c(0,1), diagonals=list(rep(-1,n),rep(1,n-1)))
-#  D0 = bandSparse(n, m=n, c(0,1), diagonals=list(-weights,weights))
-  if (k != 0) {
-    for (i in 1:k) {
-      D = D0 %*% D
-#      D = D/max(D)
-    }
+getDtfPosSparse <- function(n,ord,pos) {
+  D = bandSparse(n, m=n, c(0,1), diagonals=list(rep(-1,n),rep(1,n-1)))
+  D0 = D
+  for (i in Seq(1,ord)) {
+    wts = c(i/(pos[(i+1):n]-pos[1:(n-i)]),rep(1,i))
+    D = D0 %*% (wts * D)
   }
-  return(D[1:(n-k-1),])
+  return(D[1:(n-ord-1),])
 }

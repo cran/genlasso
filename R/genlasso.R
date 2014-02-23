@@ -23,11 +23,14 @@ genlasso <- function(y, X, D, approx=FALSE, maxsteps=2000, minlam=0,
   if (is.null(X) && length(y)!=ncol(D)) stop("Dimensions don't match [length(y) != ncol(D)].")
   if (checkrows(D)) stop("D cannot have duplicate rows.")
 
+  # For simplicity
+  y = as.numeric(y)
+  
   # X should be treated as the identity
   if (is.null(X)) {
     out = dualpath(y,D,approx,maxsteps,minlam,tol,verbose)
   }
-
+  
   # X is given
   else {
     if (!is.matrix(D)) {
@@ -42,10 +45,11 @@ genlasso <- function(y, X, D, approx=FALSE, maxsteps=2000, minlam=0,
 
     ridge = FALSE
     if (p > n) {
+      if (eps<=0) stop("eps must be positive when X has more columns than rows.")
       warning(sprintf("Adding a small ridge penalty (multiplier %g), because X has more columns than rows.",eps))
       ridge = TRUE
     }
-    else if (p <= n) {
+    else {
       # Check that X has full column rank
       x = svd(X)
       if (all(x$d>tol)) {
@@ -54,8 +58,9 @@ genlasso <- function(y, X, D, approx=FALSE, maxsteps=2000, minlam=0,
         D2 = D %*% Xi
       }
       else {
-        ridge = TRUE
+        if (eps<=0) stop("eps must be positive when X is column rank deficient.")
         warning(sprintf("Adding a small ridge penalty (multiplier %g), because X is column rank deficient.",eps))
+        ridge = TRUE
       }
     }
     
@@ -68,15 +73,19 @@ genlasso <- function(y, X, D, approx=FALSE, maxsteps=2000, minlam=0,
 
     out = dualpath(y2,D2,approx,maxsteps,minlam,tol,verbose)
 
-    # Fix beta, y, bls, and save the X matrix
+    # Save these path objects for internal use later
+    out$pathobjs$y2 = y2
+    out$pathobjs$Xi = Xi
+
+    # Fix beta, fit, y, bls, and save the X matrix
     out$beta = Xi %*% out$fit
+    out$fit = X %*% out$beta
     out$y = y
-    out$bls = Xi %*% y
+    out$bls = Xi %*% y2
     out$X = X
   }
 
   out$call = cl
   class(out) = c("genlasso", "list")
-
   return(out)
 }

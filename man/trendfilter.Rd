@@ -10,12 +10,18 @@
   \code{\link{fusedlasso1d}}.
 }
 \usage{
-trendfilter(y, X, z, ord = 1, approx = FALSE, maxsteps = 2000,
+trendfilter(y, pos, X, ord = 1, approx = FALSE, maxsteps = 2000,
             minlam = 0, tol = 1e-11, verbose = FALSE)
 }
 \arguments{
   \item{y}{
     a numeric response vector.
+  }
+  \item{pos}{
+    an optional numeric vector specifying the positions of the
+    observations, and missing \code{pos} is assumed to mean unit spacing.
+    This can only be used when the predictor matrix \code{X} is missing
+    (i.e., identity predictor matrix).
   }
   \item{X}{
     an optional matrix of predictor variables, with observations along
@@ -24,12 +30,6 @@ trendfilter(y, X, z, ord = 1, approx = FALSE, maxsteps = 2000,
     checked, for efficiency. A rank deficient \code{X} may or may not
     cause errors, depending on the type of rank deficiency. If missing,
     \code{X} is assumed to be the identity matrix. 
-  }
-  \item{z}{
-    an optional numeric vector specifying the positions of the
-    observations, and missing \code{z} is assumed to mean unit spacing.
-    This can only be used when the predictor matrix \code{X} is missing
-    (i.e., identity predictor matrix).
   }
   \item{ord}{
     an integer specifying the desired order of the piecewise polyomial
@@ -41,8 +41,8 @@ trendfilter(y, X, z, ord = 1, approx = FALSE, maxsteps = 2000,
     should be used (with no dual coordinates leaving the boundary).
     Default is \code{FALSE}. Note 
     that for the 1d fused lasso (zeroth order trend filtering), with
-    identity predictor matrix and evenly spaced grid positions, this
-    approximate path is the same as the exact solution path. 
+    identity predictor matrix, this approximate path is the same as 
+    the exact solution path. 
   }
   \item{maxsteps}{
     an integer specifying the maximum number of steps for the algorithm
@@ -71,16 +71,24 @@ trendfilter(y, X, z, ord = 1, approx = FALSE, maxsteps = 2000,
   spline, except the knots in the piecewise polynomial (changes in the 
   (k+1)st derivative, if the polynomial order is k) are chosen
   adaptively based on the observations. This is in contrast to
-  regression splines, where the knots are pre-specified, and smoothing
-  splines, which place a knot at every data point.
+  regression splines, where the knots are prespecified, and smoothing
+  splines, which place a knot at every data point. 
 
-  With a non-identity predictor matrix, the trend filtering problem
+  With a nonidentity predictor matrix, the trend filtering problem
   enforces piecewise polynomial smoothness along successive components
   of the coefficient vector. This can be used to fit a kind of varying
-  coefficient model. 
+  coefficient model.
+
+  We note that, in the signal approximator (identity predictor matrix) 
+  case, fitting trend filtering estimate with arbitrary positions \code{pos} 
+  is theoretically no harder than doing so on an evenly spaced grid. However
+  in practice, with differing gaps between points, the algorithm can 
+  become numerically unstable even for large (or moderately large) problems. 
+  This is especially true as the polynomial order increases. Hence, use the
+  positions argument \code{pos} with caution. 
 }
 \value{
-  Returns and object of class "trendfilter", a subclass of
+  Returns an object of class "trendfilter", a subclass of
   "genlasso". This is a list with at least following components:
   \item{lambda}{
     values of lambda at which the solution path changes slope,
@@ -120,7 +128,7 @@ trendfilter(y, X, z, ord = 1, approx = FALSE, maxsteps = 2000,
     the least squares solution, i.e., the solution at lambda = 0. This
     can be \code{NULL} when \code{completepath} is \code{FALSE}. 
   }
-  \item{trendorder}{
+  \item{ord}{
     the order of the piecewise polyomial that has been fit.
   }
   \item{call}{
@@ -131,6 +139,9 @@ trendfilter(y, X, z, ord = 1, approx = FALSE, maxsteps = 2000,
   Ryan J. Tibshirani and Taylor B. Arnold
 }
 \references{
+  Tibshirani, R. J. (2013), "Adaptive piecewise polynomial estimation
+  via trend filtering", arXiv: 1304.2986.
+	
   Tibshirani, R. J. and Taylor, J. (2011), "The solution path of the
   generalized lasso", Annals of Statistics 39 (3) 1335--1371.
 
@@ -141,17 +152,10 @@ trendfilter(y, X, z, ord = 1, approx = FALSE, maxsteps = 2000,
   \code{\link{fusedlasso1d}}, \code{\link{genlasso}},
   \code{\link{cv.trendfilter}}, \code{\link{plot.trendfilter}}
 }
-\section{Notes}{
-  Fitting trend filtering estimate with arbitrary positions \code{z} is
-  theoretically no harder than doing so on an evenly spaced grid, but in
-  practice it can become numerically unstable even for moderately sized
-  problems, especially as the polynomial order increases. Use the
-  positions argument \code{z} with caution. 
-}
 \examples{
 # Constant trend filtering (the 1d fused lasso)
 set.seed(0)
-n = 50
+n = 100
 beta0 = rep(sample(1:10,5),each=n/5)
 y = beta0 + rnorm(n,sd=0.8)
 a = fusedlasso1d(y)
@@ -159,7 +163,7 @@ plot(a)
 
 # Linear trend filtering
 set.seed(0)
-n = 50
+n = 100
 beta0 = numeric(n)
 beta0[1:20] = (0:19)*4/19+2
 beta0[20:45] = (25:0)*3/25+3
@@ -171,7 +175,7 @@ plot(a,df=c(2,3,4,10))
 
 # Cubic trend filtering
 set.seed(0)
-n = 50
+n = 100
 beta0 = numeric(100)
 beta0[1:40] = (1:40-20)^3
 beta0[40:50] = -60*(40:50-50)^2 + 60*100+20^3

@@ -25,8 +25,8 @@ fusedlasso <- function(y, X, D, graph, gamma=0, approx=FALSE,
   if (missing(X)) X = NULL
   if (!is.null(X) && !is.matrix(X)) stop("X must be a matrix.")
   # Right now there is no check for X having full
-  # column rank; this is for efficiency, we never
-  # have to compute its pseudoinverse, otherwise
+  # column rank; this is for efficiency, we hence
+  # never have to compute its pseudoinverse
   
   if (missing(D)) D = NULL
   if (missing(graph)) graph = NULL
@@ -50,6 +50,9 @@ fusedlasso <- function(y, X, D, graph, gamma=0, approx=FALSE,
     }
   }
 
+  # For simplicity
+  y = as.numeric(y)
+  
   # Build D if we have a graph
   if (is.null(D) && !is.null(graph)) {
     D = getDgSparse(graph)
@@ -91,3 +94,6 @@ fusedlasso <- function(y, X, D, graph, gamma=0, approx=FALSE,
   }
   else invisible(out)
 }
+
+
+

@@ -5,7 +5,7 @@
 }
 \description{
   This function processes output from a call to \code{\link{fusedlasso}}
-  or \code{\link{fusedlasso}} when file backing is turned on.
+  or \code{\link{fusedlasso2d}} when file backing is turned on.
 }
 \usage{
 filebackout(object, y, X, file)

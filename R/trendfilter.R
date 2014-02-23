@@ -7,28 +7,48 @@
 # order k+1, and X is n x p and full column rank. The solution is
 # a piecewise polynomial of degree k, with adaptively chosen knots.
 
-trendfilter <- function(y, X, z, ord=1, approx=FALSE, maxsteps=2000,
+trendfilter <- function(y, pos, X, ord=1, approx=FALSE, maxsteps=2000,
                         minlam=0, tol=1e-11, verbose=FALSE) {
   cl = match.call()
 
   if (missing(y)) stop("y is missing.")
   if (!is.numeric(y)) stop("y must be numeric.")
-  if (missing(z)) z = NULL
-  if (!is.null(z) && !is.numeric(z)) stop("z must be numeric.")
-  if (!is.null(z) && is.unsorted(z)) stop("z must be in increasing order.")
+  if (missing(pos)) pos = NULL
+  if (!is.null(pos) && !is.numeric(pos)) stop("pos must be numeric.")
+  if (!is.null(pos) && is.unsorted(pos)) stop("pos must be in increasing order.")
+  if (any(diff(pos)==0)) stop("pos must contain distinct values.")
   if (missing(X)) X = NULL
   if (!is.null(X) && !is.matrix(X)) stop("X must be a matrix.")
-  if (!is.null(z) && !is.null(X)) stop("z cannot be used with a design matrix X.")
+  if (!is.null(pos) && !is.null(X)) stop("Underlying positions cannot be specified with a (nonidentity) predictor matrix X.") 
   if (ord<0 || round(ord)!=ord) stop("ord must be a nonnegative integer.")
   if (length(y) <= ord+1) stop("Not enough data points to fit a trend of the given order [need length(y) > ord+1].")
   if (ord>3) warning(paste("For numerical stability, it is not recommended to run",
                            "trend filtering with a polynomial order larger than 3."))
+
+  # For simplicity
+  y = as.numeric(y)
   
   if (is.null(X)) {
-    n = length(y)    
-    if (is.null(z)) D = getDtfSparse(n,ord)
-    else D = getDtfPosSparse(n,ord,z)
+    n = length(y)
+    if (is.null(pos)) D = getDtfSparse(n,ord)
+    else D = getDtfPosSparse(n,ord,pos)
     out = dualpathWideSparse(y,D,NULL,approx,maxsteps,minlam,tol,verbose)
+
+    # Compute beta, fit, y, bls (this would have been done by
+    # the dualpath function)
+    out$beta = as.matrix(y - t(D)%*%out$u)
+    colnames(out$beta) = colnames(out$u)
+    out$fit = out$beta
+    out$y = y
+    out$bls = y
+    
+    # Hijack the pathobjs component (to introduce what would
+    # have been put here from the dualpath function)
+    out$pathobjs$n0 = n
+    out$pathobjs$y0 = y
+    out$pathobjs$j = 1:n
+    out$pathobjs$D0 = D
+    out$pathobjs$coldif = 0
   }
 
   else {
@@ -38,8 +58,8 @@ trendfilter <- function(y, X, z, ord=1, approx=FALSE, maxsteps=2000,
     out = dualpathTrendX(y,X,D,ord,approx,maxsteps,minlam,tol,verbose)
   }
   
-  out$trendorder = ord
-  if (!is.null(z)) out$z = z
+  out$ord = ord
+  out$pos = pos
   out$call = cl
   
   class(out) = c("trendfilter", "genlasso", "list")

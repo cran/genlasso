@@ -14,11 +14,10 @@
 \usage{
 fusedlasso(y, X, D, graph, gamma = 0, approx = FALSE, maxsteps = 2000,
            minlam = 0, tol = 1e-11, verbose = FALSE, fileback = FALSE)  
-fusedlasso1d(y, X, z, gamma = 0, approx = FALSE, maxsteps = 2000,
+fusedlasso1d(y, pos, X, gamma = 0, approx = FALSE, maxsteps = 2000,
              minlam = 0, tol = 1e-11, verbose = FALSE)
-fusedlasso2d(y, X, dim1, dim2, gamma = 0, approx = FALSE,
-             maxsteps = 2000, minlam = 0, tol = 1e-11, verbose = FALSE, 
-             fileback = FALSE)
+fusedlasso2d(y, X, dim1, dim2, gamma = 0, approx = FALSE, maxsteps = 2000, 
+	     minlam = 0, tol = 1e-11, verbose = FALSE, fileback = FALSE)
 }
 \arguments{
   \item{y}{
@@ -27,6 +26,12 @@ fusedlasso2d(y, X, dim1, dim2, gamma = 0, approx = FALSE,
     (its dimensions corresponding to the underlying 2d grid). Note that
     when \code{y} is given as a vector in \code{fusedlasso2d}, with no
     \code{X} passed, it should be in column major order. 
+  }
+  \item{pos}{
+    only for \code{fusedlasso1d}, these are the optional positions of
+    the positions in the 1d grid. If missing, the 1d grid is assumed to  
+    have unit spacing. Note that arbitrary positions \code{pos} cannot be
+    used in the presence of a nonidentity predictor matrix \code{X}.
   }
   \item{X}{
     an optional matrix of predictor variables, with observations along
@@ -46,13 +51,6 @@ fusedlasso2d(y, X, dim1, dim2, gamma = 0, approx = FALSE,
     only for \code{fusedlasso}, this is the underlying graph as an
     \code{igraph} object from the \code{igraph} package. Only one of
     \code{D} or \code{graph} needs to be specified.
-  }
-  \item{z}{
-    only for \code{fusedlasso1d}, these are the optional positions of
-    the gridpoints in the 1d grid. If missing, the 1d grid is assumed to  
-    have unit spacing. Note that arbitrary positions \code{z} cannot be
-    used in the presence of a non-identity predictor matrix \code{X} or
-    a nonzero lambda ratio \code{gamma}. 
   }
   \item{dim1}{
     only for \code{fusedlasso2d}, this is the number of rows in the
@@ -74,9 +72,8 @@ fusedlasso2d(y, X, dim1, dim2, gamma = 0, approx = FALSE,
     a logical variable indicating if the approximate solution path
     should be used (with no dual coordinates leaving the boundary).
     Default is \code{FALSE}. Note 
-    that for the 1d fused lasso, with identity predicor matrix and
-    evenly spaced grid positions, this approximate path is the same as
-    the exact solution path.  
+    that for the 1d fused lasso, with identity predicor matrix,
+    this approximate path is the same as the exact solution path.  
   }
   \item{maxsteps}{
     an integer specifying the maximum number of steps for the algorithm
@@ -105,13 +102,13 @@ fusedlasso2d(y, X, dim1, dim2, gamma = 0, approx = FALSE,
   }
 }
 \details{
-  The fused lasso problem is to minimize the criterion
+  The fused lasso estimate minimizes the criterion
   \deqn{
     1/2 \sum_{i=1}^n (y_i - x_i^T \beta_i)^2 + \lambda \sum_{(i,j) \in E}
     |\beta_i - \beta_j| + \gamma \cdot \lambda \sum_{i=1}^p |\beta_i|, 
   }
   where \eqn{x_i} is the ith row of the predictor matrix and \eqn{E} is
-  the edge set of the underlying graph. The solution \eqn{\hat{beta}} is
+  the edge set of the underlying graph. The solution \eqn{\hat{\beta}} is
   computed as a function of the regularization parameter \eqn{\lambda},
   for a fixed value of \eqn{\gamma}. The default is to set
   \eqn{\gamma=0}, which corresponds to pure fusion of the coefficient
@@ -132,6 +129,27 @@ fusedlasso2d(y, X, dim1, dim2, gamma = 0, approx = FALSE,
   very large problems, where the path object cannot be read safely into
   memory, the user can use a customized call to the \code{readlines}
   function.  
+
+  Finally, for the image denoising problem, i.e., the fused lasso over a 2d 
+  grid with identity predictor matrix, it is easy to specify a huge graph
+  with a seemingly small amount of data. For instance, running the 2d
+  fused lasso (with identity predictor matrix) on an image at standard
+  1080p HD resolution yields a graph with over 2 million
+  edges. Moreover, in image denoising problems---somewhat unlike most
+  other applications of the fused lasso (and generalized lasso)---a
+  solution is often desired near the dense end of the path
+  (\eqn{\lambda=0}) as opposed to the regularized end
+  (\eqn{\lambda=\infty}). The dual path algorithm implemented by the
+  \code{fusedlasso2d} function begins at the fully regularized end
+  and works its way down to the dense end. For a problem with many
+  edges (dual variables), if a solution at the dense is desired, then it
+  must usually pass through a huge number knots in the path. Hence it is
+  not advisable to run \code{fusedlasso2d} on image denoising problems of
+  large scale, as the dual solution path is computationally
+  infeasible. It should be noted that a faster algorithm for the 2d
+  fused lasso solution path (when the predictor matrix is the identity),
+  which begins at the dense end of the path, is available in the
+  \code{flsa} package.
 } 
 \value{
   If \code{fileback} is \code{TRUE}, a special list is silently returned
@@ -198,29 +216,22 @@ fusedlasso2d(y, X, dim1, dim2, gamma = 0, approx = FALSE,
   \code{\link{softthresh}}, \code{\link{filebackout}},
   \code{\link{genlasso}} 
 }
-\section{Notes}{
-  For the image denoising problem, i.e., the fused lasso over a 2d grid
-  with identity predictor matrix, it is easy to specify a huge graph
-  with a seemingly small amount of data. For instance, running the 2d
-  fused lasso (with identity predictor matrix) on an image at standard
-  1080p HD resolution yields a graph with over 2 million
-  edges. Moreover, in image denoising problems--somewhat unlike most
-  other applications of the fused lasso (and generalized lasso)--a
-  solution is often desired near the dense end of the path
-  (\eqn{\lambda=0}) as opposed to the regularized end
-  (\eqn{\lambda=\infty}). The dual path algorithm implemented by the
-  \code{fusedlasso2d} function begins at the fully regularized end
-  and works its way down to the dense end. For a problem with many
-  edges (dual variables), if a solution at the dense is desired, then it
-  must usually pass through a huge number knots in the path. Hence it is
-  not advisable to run \code{fusedlasso2d} on image denoising problems of
-  large scale, as the dual solution path is computationally
-  infeasible. It should be noted that a faster algorithm for the 2d
-  fused lasso solution path (when the predictor matrix is the identity),
-  which begins at the dense end of the path, is available in the
-  \code{flsa} package.
-}
 \examples{
+# Fused lasso on a custom graph
+set.seed(0)
+edges = c(1,2,1,3,1,5,2,4,2,5,3,6,3,7,3,8,6,7,6,8)
+gr = graph(edges=edges,directed=FALSE)
+plot(gr)
+y = c(1,1,0,1,1,0,0,0) + rnorm(8,0.1)
+
+# Can either pass the graph object directly, or 
+# first construct the penalty matrix, and then 
+# pass this
+a1 = fusedlasso(y,graph=gr)
+D = getDgSparse(gr)
+a2 = fusedlasso(y,D=D)
+
+plot(a1,numbers=TRUE)
 
 \dontrun{
 # The 2d fused lasso with a predictor matrix X
@@ -251,8 +262,8 @@ for (i in 1:8) {
   axes=FALSE)
   mtext(bquote(lambda==.(sprintf("\%.3f",a$lambda[i]))))
 }
-
 }
-
 }
+% Add one or more standard keywords, see file 'KEYWORDS' in the
+% R documentation directory.
 \keyword{models}

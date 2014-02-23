@@ -7,14 +7,14 @@ predict.genlasso <- function(object, lambda, nlam, df, Xnew, ...) {
   
   if (missing(Xnew)) {
     if (is.null(object$X)) pr$fit = co$beta
-    else pr$fit = object$X%*%co$beta
+    else pr$fit = object$X %*% co$beta
   }
   else {
     if (!is.matrix(Xnew) || ncol(Xnew)!=nrow(co$beta)) {
       stop(paste("Xnew must be a matrix with the appropriate number of columns.",
                  "See help pages for details."))
     }
-    pr$fit = Xnew%*%co$beta
+    pr$fit = Xnew %*% co$beta
   }
   
   return(pr)

@@ -1,6 +1,7 @@
 # This is for an arbitrary matrix D. It is really just a wrapper
 # for the hard work that is done by the functions dualpathWide,
 # dualpathWideSparse, or dualpathTall.
+
 dualpath <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
                      tol=1e-11, verbose=FALSE) {
   m = nrow(D)
@@ -21,8 +22,9 @@ dualpath <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
   y = y[j]
   D = D[,j,drop=FALSE]
   n = length(j)
+  coldif = n0-n
   
-  # If there no columns left, there is nothing to do
+  # If there are no columns left, there is nothing to do
   if (n==0) {
     return(list(lambda=Inf,beta=as.matrix(y0),fit=as.matrix(y0),
                 u=as.matrix(rep(0,m)),hit=TRUE,df=n0,y=y0,
@@ -51,16 +53,24 @@ dualpath <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
         Q2 = matrix(nrow=n,ncol=0) # n x 0
         out = dualpathWide(y,D,Q1,Q2,R,approx,maxsteps,minlam,tol,verbose)
       }
-      # Account for the fact that we may have had zero columns
-      if (n<n0) {
-        out$df = out$df + n0-n
-        beta = matrix(y0,n0,length(out$lambda))
-        beta[j,] = out$beta
-        out$beta = beta
-        out$fit = beta
-        out$y = y0
-        out$bls = y0
-      }
+      
+      # Construct beta, fit, y, bls, while accounting for the fact that
+      # we may have had zero columns in D 
+      out$df = out$df + coldif
+      beta = matrix(y0,n0,length(out$lambda))
+      beta[j,] = as.matrix(y0[j] - t(D0[,j])%*%out$u)
+      colnames(beta) = colnames(out$u)
+      out$beta = beta
+      out$fit = beta
+      out$y = y0
+      out$bls = y0
+
+      # Add to pathobjs component
+      out$pathobjs$n0 = n0
+      out$pathobjs$y0 = y0
+      out$pathobjs$j = j
+      out$pathobjs$D0 = D0
+      out$pathobjs$coldif = coldif
       return(out)
     }
 
@@ -119,15 +129,22 @@ dualpath <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
     
   out = dualpathTall(y,D,Q1,Q2,R,q,approx,maxsteps,minlam,tol,verbose)
  
-  # Account for the fact that may have had zero columns in D,
-  # or also that we may have dropped columns from D
-  out$df = out$df + n0-n
+  # Construct beta, fit, y, bls, while accounting for the fact that
+  # we may have had zero columns in D 
+  out$df = out$df + coldif
   beta = matrix(y0,n0,length(out$lambda))
   beta[j,] = y0[j] - t(D0[,j])%*%out$u  
+  colnames(beta) = colnames(out$u)
   out$beta = beta
   out$fit = beta
   out$y = y0
   out$bls = y0
-  
+
+  # Add to pathobjs component
+  out$pathobjs$n0 = n0
+  out$pathobjs$y0 = y0
+  out$pathobjs$j = j
+  out$pathobjs$D0 = D0
+  out$pathobjs$coldif = coldif
   return(out)
 }

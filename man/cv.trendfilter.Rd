@@ -7,11 +7,10 @@
   This function performs k-fold cross-validation to choose the value of
   the regularization parameter lambda for a trend filtering problem,
   given the computed solution path. This function only applies to trend
-  filtering objects with identity predictor matrix (no \code{X} passed),
-  and the observations spaced evenly on a grid (no \code{z} passed). 
+  filtering objects with identity predictor matrix (no \code{X} passed).
 }
 \usage{
-cv.trendfilter(object, k = 10, mode = c("lambda", "df"),
+cv.trendfilter(object, k = 5, mode = c("lambda", "df"),
                approx = FALSE, tol = 1e-11, verbose = FALSE)
 }
 \arguments{
@@ -22,7 +21,7 @@ cv.trendfilter(object, k = 10, mode = c("lambda", "df"),
   \item{k}{
     an integer indicating the number of folds to split the data
     into. Must be between 2 and n-2 (n being the number of
-    observations), default is 10. It is generally not a good idea to
+    observations), default is 5. It is generally not a good idea to
     pass a value of k much larger than 10 (say, on the scale of n); see
     "Details" below. 
   }
@@ -55,12 +54,15 @@ cv.trendfilter(object, k = 10, mode = c("lambda", "df"),
   }
 }
 \details{
-  For trend filtering (with identity predictor matrix, and observations
-  laid out on an evenly spaced grid), the folds for k-fold
-  cross-validation are chosen by placing every kth point into the same
-  fold. The first and last points are not included in any fold and are
-  always included in building the predictive model. As an example, with
-  n=15 data points and k=4 folds, the points are assigned as
+  For trend filtering (with an identity predictor matrix), the folds 
+  for k-fold cross-validation are chosen by placing every kth point into
+  the same fold. (Here the points are implicitly ordered according to their 
+  underlying positions---either assumed to be evenly spaced, or explicitly 
+  passed through the \code{pos} argument.) 
+  The first and last points are not included in any fold and are always
+  included in building the predictive model. As an example, 
+  with n=15 data points and k=4 folds, the points are assigned to folds 
+  in the following way:
   \deqn{
     x \; 1 \; 2 \; 3 \; 4 \; 1 \; 2 \; 3 \;  4 \; 1 \; 2 \; 3 \; 4 \; 1
     \; x
@@ -69,13 +71,13 @@ cv.trendfilter(object, k = 10, mode = c("lambda", "df"),
   }
   where \eqn{x} indicates no assignment. Therefore, the folds are not
   random and running \code{cv.trendfilter} twice will give the same
-  result. In the calculation of the cross-validation error, the
-  predicted value a point is given by the average of the fits at that 
+  result. In the calculation of the cross-validated error, the
+  predicted value at a point is given by the average of the fits at this 
   point's two neighbors (guaranteed to be in a different fold). 
 
   Running cross-validation in modes "lambda" and "df" often yields very
   similar results. The mode "df" simply gives an alternative
-  parametrization of the sequence of cross-validated models and can be
+  parametrization for the sequence of cross-validated models and can be
   more convenient for some applications; if you are confused about its
   function, simply leave the mode equal to "lambda".
 }
@@ -136,19 +138,19 @@ cv.trendfilter(object, k = 10, mode = c("lambda", "df"),
 \examples{
 # Constant trend filtering (the 1d fused lasso)
 set.seed(0)
-n = 100
+n = 50
 beta0 = rep(sample(1:10,5),each=n/5)
 y = beta0 + rnorm(n,sd=0.8)
 a = fusedlasso1d(y)
 plot(a)
 
-\dontrun{
-# Choose lambda by 10-fold cross-validation
+# Choose lambda by 5-fold cross-validation
 cv = cv.trendfilter(a)
 plot(cv)
 plot(a,lambda=cv$lambda.min,main="Minimal CV error")
 plot(a,lambda=cv$lambda.1se,main="One standard error rule")
 
+\dontrun{
 # Cubic trend filtering
 set.seed(0)
 n = 100
@@ -160,16 +162,14 @@ beta0[70:100] = -1/6*(70:100-110)^3 + -1/6*40^3 + 6000
 beta0 = -beta0
 beta0 = (beta0-min(beta0))*10/diff(range(beta0))
 y = beta0 + rnorm(n)
-a = trendfilter(y,ord=3)
+a = trendfilter(y,ord=3,maxsteps=150)
 plot(a,nlam=5)
 
-# Choose lambda by 10-fold cross-validation
+# Choose lambda by 5-fold cross-validation
 cv = cv.trendfilter(a)
 plot(cv)
 plot(a,lambda=cv$lambda.min,main="Minimal CV error")
 plot(a,lambda=cv$lambda.1se,main="One standard error rule")
-
 }
-
 }
 \keyword{utilities}

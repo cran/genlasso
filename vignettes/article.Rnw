@@ -70,8 +70,8 @@
 \fvset{listparameters={\setlength{\topsep}{0pt}}}
 \renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
 
-\author{Ryan J. Tibshirani \and Taylor B. Arnold}
-\Plainauthor{Ryan Tibshirani, Taylor Arnold}
+\author{Taylor B. Arnold \and Ryan J. Tibshirani}
+\Plainauthor{Taylor Arnold, Ryan Tibshirani}
 
 \title{Introduction to the \pkg{genlasso} package}
 \Plaintitle{Introduction to the genlasso package}

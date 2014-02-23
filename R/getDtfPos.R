@@ -1,3 +1,3 @@
-getDtfPos <- function(n,k,z) {
-  return(as.matrix(getDtfPosSparse(n,k,z)))
+getDtfPos <- function(n,ord,pos) {
+  return(as.matrix(getDtfPosSparse(n,ord,pos)))
 }

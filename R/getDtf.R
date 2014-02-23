@@ -1,3 +1,3 @@
-getDtf <- function(n, k) {
-  return(as.matrix(getDtfSparse(n,k)))
+getDtf <- function(n, ord) {
+  return(as.matrix(getDtfSparse(n,ord)))
 }

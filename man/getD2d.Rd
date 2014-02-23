@@ -33,18 +33,18 @@ getD2d(dim1, dim2)
 getD2dSparse(dim1, dim2)
 getDg(graph)
 getDgSparse(graph)
-getDtf(n, k)
-getDtfSparse(n, k)
-getDtfPos(n, k, z)
-getDtfPosSparse(n, k, z)
+getDtf(n, ord)
+getDtfSparse(n, ord) 
+getDtfPos(n, ord, pos)
+getDtfPosSparse(n, ord, pos)
 getGraph(D)
 }
 \arguments{
   The arguments for the sparse variants are identical to those for the
   regular variants, which are described below.
   \item{n}{
-    for \code{getD1d}, \code{getDtf}, and \code{getDtfPos}, the number
-    of points in the 1d sequence.
+    for \code{getD1d}, \code{getDtf}, and \code{getDtfPos}, 
+    the number of points in the 1d sequence.
   }
   \item{dim1, dim2}{
     for \code{getD2d}, the number of rows and columns in the 2d grid,
@@ -56,13 +56,13 @@ getGraph(D)
     matrix is the oriented incidence matrix of the graph, with arbitrary
     orientations assigned to each edge).
   }
-  \item{k}{
-    for \code{getDtf} and \code{getDtfPos}, the order of the
-    polynomial. E.g., k=0 is the 1d fused lasso and k=1 is linear trend
-    filtering. Hence the returned matrix is the discrete (k+1)st
+  \item{ord}{
+    for \code{getDtf}, and \code{getDtfPos}, the order of the
+    polynomial. E.g., ord=0 is the 1d fused lasso and ord=1 is linear 
+    trend filtering. Hence the returned matrix is the discrete (ord+1)st
     derivative operator. 
   }
-  \item{z}{
+  \item{pos}{
     for \code{getDtfPos}, a numeric vector giving the positions of
     points in the 1d sequence. Must have length \code{n}. 
   }

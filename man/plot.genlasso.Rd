@@ -13,7 +13,7 @@
   difficult to interpret. The function \code{plot.trendfilter} applies
   to objects of class "trendfilter", and plots trend filtering
   coefficients at a single value of lambda (or multiple 
-  values, as specified by the user) as a function of their positions
+  values, as specified by the user) as a function of the input positions
   (which, recall, are assumed to be evenly spaced if not specified).
   The function \code{plot.cv.trendfilter} plots the output of
   \code{cv.trendfilter}. 
@@ -51,7 +51,8 @@
   \item{style}{
     for \code{plot.trendfilter},
     a character string, either "trend" or "path". If "trend", then trend
-    filtering coefficients are plotted according to their position. If
+    filtering coefficients are plotted according to their underlying 
+    positions. If
     "path", then a plot of the coordinate paths is produced with the
     function \code{plot.genlasso}. Default is "trend".
   }
@@ -91,11 +92,11 @@
 \examples{
 # Constant trend filtering (the 1d fused lasso)
 set.seed(0)
-n = 50
+n = 100
 beta0 = rep(sample(1:10,5),each=n/5)
 y = beta0 + rnorm(n,sd=0.8)
 a = fusedlasso1d(y)
-cv = cv.trendfilter(a, k=4)
+cv = cv.trendfilter(a)
 
 plot(a,style="path")
 plot(cv)

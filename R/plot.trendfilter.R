@@ -20,8 +20,9 @@ plot.trendfilter <- function(x, style=c("trend", "path"), lambda,
     if (missing(lambda) && missing(nlam) && missing(df)) nlam = 10
     co = coef.genlasso(x,lambda,nlam,df)
     if (length(co$lambda)==0) stop("Nothing to plot.")
-    
-    if (!is.null(x$z)) xvals = x$z
+
+    xvals = 1:nrow(co$beta)
+    if (!is.null(x$pos)) xvals = x$pos
     else xvals = 1:nrow(co$beta)
     
     # If there's no X matrix, draw y

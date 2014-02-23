@@ -29,8 +29,8 @@ genlasso(y, X, D, approx = FALSE, maxsteps = 2000, minlam = 0,
     is computed.
   }
   \item{D}{
-    a penalty matrix. Its number of rows must be equal to the number of
-    columns of \code{X}, or if no \code{X} is given, the length of
+    a penalty matrix. Its number of columns must be equal to the number
+    of columns of \code{X}, or if no \code{X} is given, the length of 
     \code{y}. This can be a sparse matrix from \code{Matrix} package,
     but this will be ignored (converted to a dense matrix) if \code{D}
     is row rank deficient or if \code{X} is specified. See "Details"
@@ -67,12 +67,12 @@ genlasso(y, X, D, approx = FALSE, maxsteps = 2000, minlam = 0,
   }
 }
 \details{
-  The generalized lasso problem is to minimize the criterion
+  The generalized lasso estimate minimizes the criterion
   \deqn{
     1/2 \|y - X \beta\|_2^2 + \lambda \|D \beta\|_1.
   }
   The solution \eqn{\hat{\beta}} is computed as a function of
-  the regularization parameter \eqn{lambda}. The advantage of the
+  the regularization parameter \eqn{\lambda}. The advantage of the
   \code{genlasso} function lies in its flexibility, i.e., the user can
   specify any penalty matrix \code{D} of their choosing. However, for a
   trend filtering problem or a fused lasso problem, it is strongly

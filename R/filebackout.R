@@ -12,8 +12,8 @@ filebackout <- function(object, y, X, file) {
   }
   
   fi = file.info(file)
-  if(is.na(fi$isdir)) stop(sprintf("Invalid file name \"%s\": does not exist in working directory.",file))
-  if(fi$isdir) stop(sprintf("Invalid file name \"%s\": points to a directory.",file))
+  if (is.na(fi$isdir)) stop(sprintf("Invalid file name \"%s\": does not exist in working directory.",file))
+  if (fi$isdir) stop(sprintf("Invalid file name \"%s\": points to a directory.",file))
 
   a = read.csv(file,header=FALSE,as.is=TRUE)
   k = nrow(a)
@@ -32,7 +32,7 @@ filebackout <- function(object, y, X, file) {
   else bls = as.numeric(a[k,2+Seq(1,n)])
   
   out = list(lambda=lambda,beta=beta,fit=beta,u=u,hit=hit,df=df,y=y,
-    completepath=completepath,bls=bls,gamma=gamma,call=match.call())
+    completepath=completepath,bls=bls,gamma=gamma,call=match.call(),fileback=TRUE)
   if (!is.null(X)) out$X = X
   class(out) = c("fusedlasso", "genlasso", "list")
   return(out)

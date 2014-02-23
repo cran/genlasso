@@ -55,6 +55,7 @@ coef.genlasso <- function(object, lambda, nlam, df, type=c("primal", "dual", "bo
     knots = object$lambda
     betas = object$beta
     us = object$u
+    dfs = object$df
     
     # If the path is complete, append the solutions
     # at lambda=0
@@ -62,6 +63,7 @@ coef.genlasso <- function(object, lambda, nlam, df, type=c("primal", "dual", "bo
       knots = c(knots,0)
       betas = cbind(betas,object$bls)
       us = cbind(us,rep(0,nrow(us)))
+      dfs = cbind(dfs,dfs[length(dfs)]+1)
     }
     
     k = length(lambda)
@@ -83,37 +85,40 @@ coef.genlasso <- function(object, lambda, nlam, df, type=c("primal", "dual", "bo
       u = t((1-p)*t(us[,blo,drop=FALSE]) + p*t(us[,bhi,drop=FALSE]))
       colnames(u) = as.character(round(lambda,3))
     }
-
+    df = dfs[blo]
+    
     # Return in original order
     o = order(o)
-    if (type == "primal") return(list(beta=beta[,o,drop=FALSE],lambda=lambda[o]))
-    if (type == "dual") return(list(u=u[,o,drop=FALSE],lambda=lambda[o]))
-    if (type == "both") return(list(beta=beta[,o,drop=FALSE],u=u[,o,drop=FALSE],lambda=lambda[o]))
+    if (type == "primal") return(list(beta=beta[,o,drop=FALSE],lambda=lambda[o],df=df[o]))
+    if (type == "dual") return(list(u=u[,o,drop=FALSE],lambda=lambda[o],df=df[o]))
+    if (type == "both") return(list(beta=beta[,o,drop=FALSE],u=u[,o,drop=FALSE],lambda=lambda[o],df=df[o]))
   }
   else {
-    # Find the last time on the path (smallest value of lambda)
-    # at which we doesn't exceed the specified df values
+    # For each specified df value, find the largest df along the path
+    # that is <= the specified value (often, this will be =). If there
+    # is more than one such spot on the path, take the last spot
     a = matrix(object$df,length(df),length(object$df),byrow=TRUE)
     b = a <= df
     i = which(rowSums(b)!=0)
+    b[b!=0] = a[b]
+    b = b == apply(b,1,max)
     j = max.col(b,ties.method="last")
     j = j[i]
     dfs = a[i+(j-1)*nrow(a)]
 
     if (type != "dual") {
       beta = object$beta[,j,drop=FALSE]
-      lambda = object$lambda[j]
       colnames(beta) = as.character(dfs)
     }
     if (type != "primal") {
       u = object$u[,j,drop=FALSE]
-      lambda = object$lambda[j]
       colnames(u) = as.character(dfs)
     }
+    lambdas = object$lambda[j]
     
-    if (type == "primal") return(list(beta=beta,df=dfs,lambda=lambda))
-    if (type == "dual") return(list(u=u,df=dfs,lambda=lambda))
-    if (type == "both") return(list(beta=beta,u=u,df=dfs,lambda=lambda))
+    if (type == "primal") return(list(beta=beta,lambda=lambdas,df=dfs))
+    if (type == "dual") return(list(u=u,lambda=lambdas,df=dfs))
+    if (type == "both") return(list(beta=beta,u=u,lambda=lambdas,df=dfs))
   }
 }
 
