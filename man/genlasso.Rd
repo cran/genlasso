@@ -14,7 +14,8 @@
 }
 \usage{
 genlasso(y, X, D, approx = FALSE, maxsteps = 2000, minlam = 0,
-         tol = 1e-11, eps = 1e-8, verbose = FALSE)
+         rtol = 1e-07, btol = 1e-07, eps = 1e-4, verbose = FALSE,
+         svd = FALSE)
 }
 \arguments{
   \item{y}{
@@ -49,21 +50,37 @@ genlasso(y, X, D, approx = FALSE, maxsteps = 2000, minlam = 0,
     a numeric variable indicating the value of lambda at which the path
     should terminate. Default is 0.
   }
-  \item{tol}{
-    a numeric variable giving the tolerance used in the calculation of
-    the hitting and leaving times. A larger value is more conservative,
-    and may cause the algorithm to miss some hitting or leaving events
-    (do not change unless you know what you're getting into!). Default
-    is 1e-11. 
+  \item{rtol}{
+    a numeric variable giving the tolerance for determining the rank of
+    a matrix: if a diagonal value in the R factor of a QR decomposition
+    is less than R, in absolute value, then it is considered zero. Hence
+    making rtol larger means being less stringent with determination of
+    matrix rank. In general, do not change this unless you know what you
+    are getting into! Default is 1e-7.
+  }
+  \item{btol}{
+    a numeric variable giving the tolerance for accepting "late" hitting
+    and leaving times: future hitting times and leaving times should always 
+    be less than the current knot in the path, but sometimes for numerical
+    reasons they are larger; any computed hitting or leaving time larger 
+    than the current knot + btol is thrown away. Hence making btol larger
+    means being less stringent withthe determination of hitting and leaving 
+    times. Again, in general, do not change this unless you know what you 
+    are getting into! Default is 1e-7.
   }
   \item{eps}{
     a numeric variable indicating the multiplier for the ridge penalty,
     in the case that \code{X} is column rank deficient. Default is
-    1e-8. 
+    1e-4. 
   }
   \item{verbose}{
     a logical variable indicating if progress should be reported after
-    each knot in the path.
+    each knot in the path. 
+  }
+  \item{svd}{
+    a logical variable indicating if the genlasso function should use 
+    singular value decomposition to solve least squares problems at each
+    path step, which is slower, but should be more stable.
   }
 }
 \details{
@@ -136,11 +153,14 @@ genlasso(y, X, D, approx = FALSE, maxsteps = 2000, minlam = 0,
   }
 }
 \author{
-  Ryan J. Tibshirani and Taylor B. Arnold
+  Taylor B. Arnold and Ryan J. Tibshirani
 }
 \references{
   Tibshirani, R. J. and Taylor, J. (2011), "The solution path of the
   generalized lasso", Annals of Statistics 39 (3) 1335--1371.
+
+  Arnold, T. B. and Tibshirani, R. J. (2014), "Efficient implementations
+  of the generalized lasso dual path algorithm", arXiv: 1405.3222.
 }
 \seealso{
   \code{\link{trendfilter}}, \code{\link{fusedlasso}},
@@ -149,7 +169,8 @@ genlasso(y, X, D, approx = FALSE, maxsteps = 2000, minlam = 0,
 }
 \examples{
 # Using the generalized lasso to run a standard lasso regression
-# (not advisable---for example purposes only!)
+# (for example purposes only! for pure lasso problems, use LARS
+# instead)
 set.seed(1)
 n = 100
 p = 10

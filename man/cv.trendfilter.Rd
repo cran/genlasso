@@ -11,7 +11,8 @@
 }
 \usage{
 cv.trendfilter(object, k = 5, mode = c("lambda", "df"),
-               approx = FALSE, tol = 1e-11, verbose = FALSE)
+               approx = FALSE, rtol = 1e-07, btol = 1e-07,
+               verbose = FALSE)
 }
 \arguments{
   \item{object}{
@@ -41,12 +42,17 @@ cv.trendfilter(object, k = 5, mode = c("lambda", "df"),
     should be used (with no dual coordinates leaving the boundary).
     Default is \code{FALSE}.
   }
-  \item{tol}{
-    a numeric variable giving the tolerance used in the calculation of
-    the hitting and leaving times. A larger value is more conservative,
-    and may cause the algorithm to miss some hitting or leaving events
-    (do not change unless you know what you're getting into!). Default
-    is 1e-11. 
+  \item{rtol}{
+    a numeric variable giving the relative tolerance used in the
+    calculation of the hitting and leaving times. A larger value
+    is more conservative, and may cause the algorithm to miss some
+    hitting or leaving events (do not change unless you know what
+    you're getting into!). Defaultis 1e-7. 
+  }
+  \item{btol}{
+    similar to \code{rtol} but in absolute terms. If numerical
+    instability is detected, first change rtol; then adjust btol
+    if problems persist.
   }
   \item{verbose}{
     a logical variable indicating if progress should be reported after

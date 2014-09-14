@@ -8,18 +8,18 @@
 # a piecewise polynomial of degree k, with adaptively chosen knots.
 
 trendfilter <- function(y, pos, X, ord=1, approx=FALSE, maxsteps=2000,
-                        minlam=0, tol=1e-11, verbose=FALSE) {
-  cl = match.call()
+                        minlam=0, rtol=1e-7, btol=1e-7, eps=1e-4, verbose=FALSE) {
 
   if (missing(y)) stop("y is missing.")
   if (!is.numeric(y)) stop("y must be numeric.")
   if (missing(pos)) pos = NULL
   if (!is.null(pos) && !is.numeric(pos)) stop("pos must be numeric.")
   if (!is.null(pos) && is.unsorted(pos)) stop("pos must be in increasing order.")
-  if (any(diff(pos)==0)) stop("pos must contain distinct values.")
+  if (!is.null(pos) && any(diff(pos)==0)) stop("pos must contain distinct values.")
   if (missing(X)) X = NULL
   if (!is.null(X) && !is.matrix(X)) stop("X must be a matrix.")
-  if (!is.null(pos) && !is.null(X)) stop("Underlying positions cannot be specified with a (nonidentity) predictor matrix X.") 
+  if (!is.null(pos) && is.null(X) && length(pos)!=length(y)) stop("Dimensions don't match [length(pos) != length(y)].")
+  if (!is.null(pos) && !is.null(X) && length(pos)!=ncol(X)) stop("Dimensions don't match [length(pos) != ncol(X)].")
   if (ord<0 || round(ord)!=ord) stop("ord must be a nonnegative integer.")
   if (length(y) <= ord+1) stop("Not enough data points to fit a trend of the given order [need length(y) > ord+1].")
   if (ord>3) warning(paste("For numerical stability, it is not recommended to run",
@@ -32,7 +32,7 @@ trendfilter <- function(y, pos, X, ord=1, approx=FALSE, maxsteps=2000,
     n = length(y)
     if (is.null(pos)) D = getDtfSparse(n,ord)
     else D = getDtfPosSparse(n,ord,pos)
-    out = dualpathWideSparse(y,D,NULL,approx,maxsteps,minlam,tol,verbose)
+    out = dualpathWideSparse(y,D,NULL,approx,maxsteps,minlam,rtol,btol,verbose)
 
     # Compute beta, fit, y, bls (this would have been done by
     # the dualpath function)
@@ -51,16 +51,24 @@ trendfilter <- function(y, pos, X, ord=1, approx=FALSE, maxsteps=2000,
     out$pathobjs$coldif = 0
   }
 
-  else {
-    if (length(y)!=nrow(X)) stop("Dimensions don't match [length(y) != nrow(X)].")
+   else {
+    n = nrow(X)
     p = ncol(X)
-    D = getDtfSparse(p,ord)
-    out = dualpathTrendX(y,X,D,ord,approx,maxsteps,minlam,tol,verbose)
+    if (length(y)!=n) stop("Dimensions don't match [length(y) != nrow(X)].")
+
+    # Figure out whether we are adding a ridge penalty
+    if (p <= n) eps = 0 
+    else warning(sprintf(paste("Adding a small ridge penalty (multiplier %g),",
+                               "because X has more columns than rows."),eps))
+    
+    if (is.null(pos)) D = getDtfSparse(p,ord)
+    else D = getDtfPosSparse(p,ord,pos)
+    out = dualpathTrendX(y,pos,X,D,ord,approx,maxsteps,minlam,rtol,btol,eps,verbose)
   }
   
   out$ord = ord
   out$pos = pos
-  out$call = cl
+  out$call = match.call()
   
   class(out) = c("trendfilter", "genlasso", "list")
   return(out)

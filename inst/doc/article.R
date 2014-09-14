@@ -57,7 +57,7 @@ plot(out)
 
 
 ###################################################
-### code chunk number 9: article.Rnw:250-251
+### code chunk number 9: article.Rnw:251-252
 ###################################################
 coef(out, lambda=sqrt(n*log(p)))
 
@@ -146,7 +146,7 @@ set.seed(1)
 n = 100
 i = 1:n
 y = (i > 20 & i < 30) + 5*(i > 50 & i < 70) +
-  rnorm(n, sd=0.1) 
+  rnorm(n, sd=0.1)
 out = fusedlasso1d(y)
 beta1 = coef(out, lambda=1.5)$beta
 

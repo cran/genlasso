@@ -1,8 +1,7 @@
-import("MASS", "Matrix", "igraph")
+import("Matrix", "igraph", "MASS")
 
 export("coef.genlasso",
        "cv.trendfilter",
-       "filebackout",
        "fusedlasso1d",
        "fusedlasso2d",
        "fusedlasso",

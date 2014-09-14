@@ -1,5 +1,6 @@
 cv.trendfilter <- function(object, k=5, mode=c("lambda", "df"),
-                           approx=FALSE, tol=1e-11, verbose=FALSE) {
+                           approx=FALSE, rtol=1e-7, btol=1e-7,
+                           verbose=FALSE) {
   cl = match.call()
   
   if (all(class(object)!="trendfilter")) {
@@ -37,7 +38,7 @@ cv.trendfilter <- function(object, k=5, mode=c("lambda", "df"),
       ytr = y[otr]
       ptr = pos[otr]
       Dtr = getDtfPosSparse(ntr,ord,ptr)
-      out = dualpathWideSparse(ytr,Dtr,NULL,approx,Inf,min(lambda),tol,verbose)
+      out = dualpathWideSparse(ytr,Dtr,NULL,approx,Inf,min(lambda),rtol,btol,verbose)
       ## (Have to do this manually now)
       out$beta = as.matrix(ytr - t(Dtr)%*%out$u)
       out$fit = out$beta
@@ -85,7 +86,7 @@ cv.trendfilter <- function(object, k=5, mode=c("lambda", "df"),
       ytr = y[otr]
       ptr = pos[otr]
       Dtr = getDtfPosSparse(ntr,ord,ptr)
-      out = dualpathWideSparse(ytr,Dtr,NULL,approx,Inf,0,tol,verbose)
+      out = dualpathWideSparse(ytr,Dtr,NULL,approx,Inf,0,rtol,btol,verbose)
       ## (Have to do this manually now)
       out$beta = as.matrix(ytr - t(Dtr)%*%out$u)
       out$fit = out$beta

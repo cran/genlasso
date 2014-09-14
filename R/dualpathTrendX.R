@@ -13,24 +13,37 @@
 # for all solutions corresponding to lambda in (lambda_k,lambda_{k-1}),
 # the open interval to the *right* of the current lambda_k.
 
-dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
-                           minlam=0, tol=1e-11, verbose=FALSE,
-                           object=NULL) {
+dualpathTrendX <- function(y, pos, X, D, ord, approx=FALSE, maxsteps=2000,
+                           minlam=0, rtol=1e-7, btol=1e-7, eps=1e-4,
+                           verbose=FALSE, object=NULL) {
   # If we are starting a new path
   if (is.null(object)) {
     m = nrow(D)
     p = ncol(D)
     n = length(y)
+
+    # Modify y,X in the case of a ridge penalty, but
+    # keep the originals 
+    y0 = y
+    X0 = X
+    if (eps>0) {
+      y = c(y,rep(0,p))
+      X = rbind(X,diag(sqrt(eps),p))
+      n = n+p
+    }
   
     # Find the minimum 2-norm solution, using some linear algebra 
     # tricks and a little bit of discrete calculus
+    if (is.null(pos)) pos = 1:p
+    Pos = matrix(rep(pos,each=ord),ord,p)
     basis = matrix(0,p,ord+1)    # Basis for null(D)
     basis[,1] = rep(1,p)
     for (i in Seq(2,ord+1)) {
-      basis[,i] = cumsum(basis[,i-1])
+      ii = Seq(1,i-1)
+      basis[,i] = apply(pmax(Pos[ii,,drop=FALSE]-pos[ii],0),
+             2,prod)/factorial(i-1) 
     }
-    lb = basis[,ord+1]           # Leading basis vector
-
+    
     # First project onto the row space of D*X^+
     xy = t(X)%*%y
     A = X%*%basis
@@ -38,8 +51,8 @@ dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
     R = qr.R(qr(A))
     e = backsolve(R,forwardsolve(R,z,upper.tri=TRUE,transpose=TRUE))
     # Note: using a QR here is preferable than simply calling
-    # solve(crossprod(A),z), for numerical stablity. Plus, it's
-    # not really any slower
+    # e = solve(crossprod(A),z), for numerical stablity. Plus,
+    # it's not really any slower
     g = xy-t(X)%*%(A%*%e)
   
    # Here we perform our usual trend filter solve but
@@ -74,8 +87,9 @@ dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
     beta[,1] = betahat
 
     # Update our basis
-    newbv = numeric(p)
-    newbv[Seq(ihit+ord+1,p)] = lb[Seq(1,p-ihit-ord)]
+    newbv = apply(pmax(Pos-pos[Seq(ihit+1,ihit+ord)],0),
+      2,prod)/factorial(ord)
+    newbv[Seq(1,ihit+ord)] = 0 # Only needed when ord=0
     basis = cbind(basis,newbv)
   
     # Other things to keep track of, but not return
@@ -89,17 +103,26 @@ dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
 
   # If iterating an already existing path
   else {
-    # Grab variables needed to construct the path
+    # Grab variables from outer object to construct the path
     lambda = NULL
     for (j in 1:length(object)) {
       if (names(object)[j] != "pathobjs") {
         assign(names(object)[j], object[[j]])
       }
     }
+
+    # Trick: save y,X from outer object
+    y0 = y
+    X0 = X
+
+    # Grab variables from inner object
     for (j in 1:length(object$pathobjs)) {
       assign(names(object$pathobjs)[j], object$pathobjs[[j]])
     }
     lams = lambda
+
+    # In the case of a ridge penalty, modify X
+    if (eps>0) X = rbind(X,diag(sqrt(eps),p))
   }
   
   tryCatch({
@@ -127,8 +150,8 @@ dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
       R = qr.R(qr(A))
       e = backsolve(R,forwardsolve(R,z,upper.tri=TRUE,transpose=TRUE))
       # Note: using a QR here is preferable than simply calling
-      # solve(crossprod(A),z), for numerical stablity. Plus, it's
-      # not really any slower
+      # e = solve(crossprod(A),z), for numerical stablity. Plus,
+      # it's not really any slower
       ea = e[,1]
       eb = e[,2]
       ga = xy-t(X)%*%(A%*%ea)
@@ -152,6 +175,7 @@ dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
 
         # Make sure none of the hitting times are larger
         # than the current lambda (precision issue)
+        hits[hits>lams[k-1]+btol] = 0
         hits[hits>lams[k-1]] = lams[k-1]
         
         ihit = which.max(hits)
@@ -177,6 +201,7 @@ dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
 
         # Make sure none of the leaving times are larger
         # than the current lambda (precision issue)
+        leaves[leaves>lams[k-1]+btol] = 0
         leaves[leaves>lams[k-1]] = lams[k-1]
 
         ileave = which.max(leaves)
@@ -197,10 +222,11 @@ dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
         uhat[B] = hit*s
         uhat[I] = a-hit*b
         betahat = fa-hit*fb
-        
+
         # Update our basis
-        newbv = numeric(p)
-        newbv[Seq(I[ihit]+ord+1,p)] = lb[Seq(1,p-I[ihit]-ord)]
+        newbv = apply(pmax(Pos-pos[Seq(I[ihit]+1,I[ihit]+ord)],0),
+          2,prod)/factorial(ord)
+        newbv[Seq(1,I[ihit]+ord)] = 0 # Only needed when ord=0
         basis = cbind(basis,newbv)
         
         # Update all other variables
@@ -292,11 +318,11 @@ dualpathTrendX <- function(y, X, D, ord, approx=FALSE, maxsteps=2000,
   # Save elements needed for continuing the path
   pathobjs = list(type="trend.x", r=r, B=B, I=I, Q1=NA, approx=approx,
     Q2=NA, k=k, df=df, D1=D1, D2=D2, Ds=Ds, ihit=ihit, m=m, n=n, p=p,
-    q=q, h=h, q0=NA, tol=tol, s=s, y=y, 
-    ord=ord, basis=basis, lb=lb, xy=xy)
+    q=q, h=h, q0=NA, rtol=rtol, btol=btol, eps=eps, s=s, y=y, ord=ord,
+    pos=pos, Pos=Pos, basis=basis, xy=xy)
   
   colnames(u) = as.character(round(lams,3))
   colnames(beta) = as.character(round(lams,3))
-  return(list(lambda=lams,beta=beta,fit=X%*%beta,u=u,hit=h,df=df,y=y,X=X,
+  return(list(lambda=lams,beta=beta,fit=X0%*%beta,u=u,hit=h,df=df,y=y0,X=X0,
               completepath=completepath,bls=bls,pathobjs=pathobjs))
 }

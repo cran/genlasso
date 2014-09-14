@@ -11,7 +11,8 @@
 # the open interval to the *right* of the current lambda_k.
 
 dualpathWide <- function(y, D, Q1, Q2, R, approx=FALSE, maxsteps=2000,
-                         minlam=0, tol=1e-11, verbose=FALSE, object=NULL) {
+                         minlam=0, rtol=1e-7, btol=1e-7, verbose=FALSE,
+                         object=NULL) {
   # If we are starting a new path
   if (is.null(object)) {
     m = nrow(D)
@@ -114,7 +115,7 @@ dualpathWide <- function(y, D, Q1, Q2, R, approx=FALSE, maxsteps=2000,
       
       # If the R factor is degenerate (it has a zero on 
       # the diagonal), then we just re-factor completely
-      if (r<m && min(abs(diag(R)))<tol) {
+      if (r<m && min(abs(diag(R)))<rtol) {
         x = qr(t(rbind(D1,D2)))
         Q = qr.Q(x,complete=FALSE)                    
         Q1 = Q[,Seq(1,m-r),drop=FALSE]                          
@@ -142,6 +143,7 @@ dualpathWide <- function(y, D, Q1, Q2, R, approx=FALSE, maxsteps=2000,
 
         # Make sure none of the hitting times are larger
         # than the current lambda (precision issue)
+        hits[hits>lams[k-1]+btol] = 0
         hits[hits>lams[k-1]] = lams[k-1]
         
         ihit = which.max(hits)
@@ -167,6 +169,7 @@ dualpathWide <- function(y, D, Q1, Q2, R, approx=FALSE, maxsteps=2000,
         
         # Make sure none of the leaving times are larger
         # than the current lambda (precision issue)
+        leaves[leaves>lams[k-1]+btol] = 0
         leaves[leaves>lams[k-1]] = lams[k-1]
         
         ileave = which.max(leaves)
@@ -246,7 +249,7 @@ dualpathWide <- function(y, D, Q1, Q2, R, approx=FALSE, maxsteps=2000,
   # Save needed elements for continuing the path
   pathobjs = list(type="wide", r=r, B=B, I=I, Q1=Q1, approx=approx,
     Q2=Q2, k=k, df=df, D1=D1, D2=D2, Ds=Ds, ihit=ihit, m=m, n=n, q=q,
-    h=h, R=R, q0=NA, tol=tol, s=s, y=y)
+    h=h, R=R, q0=NA, rtol=rtol, btol=btol, s=s, y=y)
   
   # If we reached the maximum number of steps
   if (k>maxsteps) {

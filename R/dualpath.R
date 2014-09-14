@@ -3,7 +3,7 @@
 # dualpathWideSparse, or dualpathTall.
 
 dualpath <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
-                     tol=1e-11, verbose=FALSE) {
+                     rtol=1e-7, btol=1e-7, verbose=FALSE) {
   m = nrow(D)
   n = ncol(D)
   
@@ -42,16 +42,16 @@ dualpath <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
     R = qr.R(x) # m x m
 
     # Check if rank(D)=m, which we need for the sparse wide algorithm
-    if (all(abs(diag(R)) > tol)) {
+    if (all(abs(diag(R)) >= rtol)) {
       # Sparse algorithm
       if (sparse) {
-        out = dualpathWideSparse(y,D,x,approx,maxsteps,minlam,tol,verbose)
+        out = dualpathWideSparse(y,D,x,approx,maxsteps,minlam,rtol,btol,verbose)
       }
       # Dense algorithm
       else {
         Q1 = qr.Q(x)               # n x m 
         Q2 = matrix(nrow=n,ncol=0) # n x 0
-        out = dualpathWide(y,D,Q1,Q2,R,approx,maxsteps,minlam,tol,verbose)
+        out = dualpathWide(y,D,Q1,Q2,R,approx,maxsteps,minlam,rtol,btol,verbose)
       }
       
       # Construct beta, fit, y, bls, while accounting for the fact that
@@ -96,7 +96,7 @@ dualpath <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
   y = y[x$pivot]  # Pivot the entries of y
   R = qr.R(x,complete=TRUE) # m x n
   
-  i = which(abs(diag(R))<tol)
+  i = which(abs(diag(R))<rtol)
   if (length(i)==0) k = 0
   else k = min(m,n)-min(i)+1
   
@@ -127,7 +127,7 @@ dualpath <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
   Q1 = Q[,Seq(1,n-q),drop=FALSE]          # m x (n-q) 
   Q2 = Q[,Seq(n-q+1,m),drop=FALSE]        # m x (m-n+q)
     
-  out = dualpathTall(y,D,Q1,Q2,R,q,approx,maxsteps,minlam,tol,verbose)
+  out = dualpathTall(y,D,Q1,Q2,R,q,approx,maxsteps,minlam,rtol,btol,verbose)
  
   # Construct beta, fit, y, bls, while accounting for the fact that
   # we may have had zero columns in D 

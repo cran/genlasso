@@ -4,9 +4,6 @@ iterate <- function(object, moresteps=200, minlam=0, verbose=FALSE) {
   # Cannot iterate if path completed
   if (object$completepath) stop("Path has completed, nothing to iterate!")
 
-  # Cannot iterate if filebacking was used
-  if (!is.null(object$fileback)) stop("Cannot iterate if filebacking was used.")
-    
   # Compute the maximum number of steps
   maxsteps = length(object$lambda) + moresteps
 
@@ -35,7 +32,7 @@ iterate <- function(object, moresteps=200, minlam=0, verbose=FALSE) {
       assign(names(object$pathobjs)[i], object$pathobjs[[i]])
     }
     lams = lambda
-    
+
     # Now we (potentially) need to fix beta, fit, y, bls
     # (This would have been done by dualpath)
     out$df = out$df + coldif
@@ -52,7 +49,7 @@ iterate <- function(object, moresteps=200, minlam=0, verbose=FALSE) {
     out$pathobjs$j  = j
     out$pathobjs$D0 = D0
     out$pathobjs$coldif = coldif
-    
+
     # Now we (potentially) need to account for an X matrix
     # (This would have been done by genlasso)
     if (!is.null(object$X)) {
@@ -70,7 +67,7 @@ iterate <- function(object, moresteps=200, minlam=0, verbose=FALSE) {
     # and underlying positions
     if (!is.null(object$ord)) out$ord = object$ord
     if (!is.null(object$pos)) out$pos = object$pos
-    
+
     out$call = cl
     class(out) = class(object)
     return(out)
@@ -97,7 +94,7 @@ iterate <- function(object, moresteps=200, minlam=0, verbose=FALSE) {
     # May need to put in underlying positions (only for
     # the 1d fused lasso)
     if (!is.null(object$pos)) out$pos = object$pos
-    
+
     out$call = cl
     class(out) = class(object)
     return(out)
@@ -106,12 +103,12 @@ iterate <- function(object, moresteps=200, minlam=0, verbose=FALSE) {
   else if (object$pathobjs$type == "trend.x") {
     out = dualpathTrendX(object=object,maxsteps=maxsteps,minlam=minlam,verbose=verbose)
     out$ord = object$ord
-    
+
     out$call = cl
     class(out) = class(object)
     return(out)
   }
-  
+
   else {
     # Not a dualpath type that we recognize
     stop(paste("Cannot iterate on path of type",object$pathobjs$type))
