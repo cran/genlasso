@@ -1,7 +1,7 @@
 # We compute the solution path of the fused lasso problem:
 #
 # \hat{\beta}(\lambda) =
-# \argmin_\beta \|y - X \beta|_2^2 + \lambda\|D \beta\|_1,
+# \argmin_\beta 1/2 \|y - X \beta|_2^2 + \lambda\|D \beta\|_1,
 #
 # where D is the incidence matrix of a given graph, and X is a full
 # column rank predictor matrix. The solution is piecewise constant
@@ -95,3 +95,6 @@ fusedlasso <- function(y, X, D, graph, gamma=0, approx=FALSE,
   class(out) = c("fusedlasso", "genlasso", "list")
   return(out)
 }
+
+
+
