@@ -1,4 +1,4 @@
-42a6727a4bc0228d6c6122bad5c33e3c *DESCRIPTION
+579b0a0f566b597328df637f599b6a14 *DESCRIPTION
 1bc07bb5d49a066c23675d89f1b630a9 *NAMESPACE
 9aa0bbc683524ac849e592d39ecb9ba1 *NEWS
 5a5cad1d3be09fa2ed1d33d1b1f80754 *R/Backsolve.R
@@ -44,7 +44,7 @@ e6e3cf8e4c31bd1a75ec6d160eee7ebf *R/maketri2.R
 9c648079ad0bab1fef5fab040a5092bd *R/maketri4.R
 1da311f3413dcd9f588a8e8f4c4987b3 *R/plot.cv.trendfilter.R
 acdc91a8fd68fd0bacc81d0d011c5bec *R/plot.gcv.genlasso.R
-f7cd5b8a9fbbd708c85f97f077cd8984 *R/plot.genlasso.R
+97d1ba9efd616af156cf5576ad0f35e6 *R/plot.genlasso.R
 05190128f8312080f6d05488de3cb202 *R/plot.trendfilter.R
 4ecd828deddf00b95456e56210253672 *R/predict.genlasso.R
 c0675232d555594e7527285add0718b6 *R/print.genlasso.R
@@ -56,13 +56,9 @@ a2e309a9044b5ef6f906029d49434543 *R/softthresh.R
 90f60c5b4802c18128069a4b09bc4c81 *R/updateT.R
 81bd57615cb822d8f58d9060fb8ef934 *R/updateW.R
 e82361c4aca1b66f57a003d6fcdbcc15 *README.md
-bed1069e0f49083bc61b11379589a454 *build/vignette.rds
-e22d38d7e25038046262111cbde29fb2 *inst/doc/article.R
-e54dea0fda946ec3ab2c35f5edc56b0e *inst/doc/article.Rnw
-ef403e9757211c05fdfc42f81c833aa2 *inst/doc/article.pdf
 f9ca9f22d4aee05ec6a31943759a8b79 *man/coef.genlasso.Rd
-e51c3d48cefebf364f98a5ed490166b6 *man/cv.trendfilter.Rd
-b6399381e63422b12edbec731fa33398 *man/fusedlasso.Rd
+05aa707aa614f5a1e29caf59124800b1 *man/cv.trendfilter.Rd
+a1a22b52819cca21acbf2ea434b0dd33 *man/fusedlasso.Rd
 1252ca5dc52c0ebcbb14e2252b82995c *man/genlasso-package.Rd
 b072c088aca21508c5de4bec460d20d5 *man/genlasso.Rd
 dfcb7f13658143e7ef75b31387876305 *man/getD2d.Rd
@@ -73,7 +69,3 @@ e8584df5c96beed371982e60f7f8ec45 *man/softthresh.Rd
 7e8d84e7c4987dc9a9ca9286d721f6fc *man/trendfilter.Rd
 e44bb0bd9eeda7876eef6478408440f1 *src/init.c
 80f549ea4006d85e79a21dd660cf06a4 *src/matrixcomps.c
-e54dea0fda946ec3ab2c35f5edc56b0e *vignettes/article.Rnw
-bda6d700423d50aef1381b0c90a2c586 *vignettes/bibfile.bib
-ba131efec857c1b66d1098e5806c6b7b *vignettes/figures/article-compTime.pdf
-5217ae9c5cedee09b6719a8311be881a *vignettes/figures/article-trendPlot.pdf
